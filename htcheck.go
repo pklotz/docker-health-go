@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	logger = log.New(os.Stdout, "dhclient: ", log.LstdFlags)
+	logger = log.New(os.Stdout, "htcheck: ", log.LstdFlags)
 
 	helpFlag  = flag.BoolP("help", "h", false, "display this help dialog")
-	healthUrl = flag.String("url", "http://localhost/", "health endpoint to check")
-	jsonExpr  = flag.String("path", "", "optional json path to check")
-	value     = flag.String("value", "", "json value to check")
+	healthUrl = flag.StringP("url", "u", "http://localhost/", "health endpoint to check")
+	jsonExpr  = flag.StringP("path", "p", "", "optional json path to check")
+	value     = flag.StringP("value", "v", "", "json value to check")
 )
 
 func main() {
@@ -26,6 +26,10 @@ func main() {
 		os.Exit(0)
 	}
 
+	os.Exit(checkUrl(*healthUrl, *jsonExpr, *value))
+}
+
+func checkUrl(healthUrl string, path string, value string) int {
 	/*
 		see https://docs.docker.com/engine/reference/builder/#healthcheck
 		The command’s exit status indicates the health status of the container. The possible values are:
@@ -34,34 +38,48 @@ func main() {
 		1: unhealthy - the container is not working correctly
 		2: reserved - do not use this exit code
 	*/
-	logger.Printf("checking url %s", *healthUrl)
-	resp, err := http.Get(*healthUrl)
+	logger.Printf("checking url %s", healthUrl)
+	resp, err := http.Get(healthUrl)
 	if err != nil {
-		panic(fmt.Errorf("get failed on url with error: %v", err))
+		logger.Printf("get failed on url with error: %v", err)
+		return 1
 	}
 	defer resp.Body.Close()
-
+	logger.Printf("response status code: %d", resp.StatusCode)
 	if resp.StatusCode == http.StatusOK {
-		if *jsonExpr != "" {
-			op, err := jq.Parse(*jsonExpr)
+		if path != "" {
+			op, err := jq.Parse(path)
 			if err != nil {
-				panic(fmt.Errorf("failed to parse JSON expression: %v", err))
+				logger.Printf("failed to parse JSON expression: %v", err)
+				return 2
 			}
 			bodyBytes, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				panic(fmt.Errorf("failed to read response body: %v", err))
+				logger.Printf("failed to read response body: %v", err)
+				return 2
 			}
 			data, _ := op.Apply(bodyBytes)
-			if string(data) == *value {
-				os.Exit(0)
+			logger.Printf("JSON value received is %s", data)
+			if value == trimQuotes(string(data)) {
+				return 0
 			}
 		} else {
-			os.Exit(0)
+			// response code not ok
+			return 0
 		}
 	}
-
 	// otherwise
-	os.Exit(1)
+	return 1
+}
+
+func trimQuotes(s string) string {
+	if len(s) > 0 && s[0] == '"' {
+		s = s[1:]
+	}
+	if len(s) > 0 && s[len(s)-1] == '"' {
+		s = s[:len(s)-1]
+	}
+	return s
 }
 
 var helpMsg = `dhclient - health check a URL

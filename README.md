@@ -8,4 +8,5 @@ Dependencies used by the project:
 - jq: jq-style JSON path (github.com/savaki/jq) - Apache 2 license
 
 Testing only:
-- httpmock: HTTP server mocking test library (github.com/jarcoal/httpmock) - MIT license
+- httpmock: HTTP server mocking test library (https://github.com/jarcoal/httpmock) - MIT license
+- gotesttools: asserts for go (https://godoc.org/gotest.tools) - Apache 2 license
