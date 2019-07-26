@@ -15,10 +15,18 @@ in docker or elsewhere instead of throwing a general-purpose HTTP client at the 
 
 ## Build
 
+Set GOPATH
+Get depenencies:
+```
+# go get github.com/spf13/pflag
+# go get github.com/savaki/jq
+# go get github.com/jarcoal/httpmock
+```
+
 Build binary and test:
 ```
-go build -o htcheck
-go test
+# go build -o htcheck
+# go test
 ```
 
 when you would like to get rid of a bit fat from the statically linked binary, use the flags
@@ -51,3 +59,9 @@ Dependencies used by the project:
 Testing only:
 - httpmock: HTTP server mocking test library (https://github.com/jarcoal/httpmock) - MIT license
 - gotesttools: asserts for go (https://godoc.org/gotest.tools) - Apache 2 license
+
+# Copyright & License
+
+Docker Health Go is Copyright (c) Peter Klotz. All Rights Reserved.
+
+Permission to modify and redistribute is granted under the terms of the Apache 2.0 license. See the LICENSE file for the full license.
